@@ -427,12 +427,12 @@ document.addEventListener("DOMContentLoaded", () => {
 				? siblingNames.join(", ")
 				: `${nbSiblings} frères/sœurs`;
 
-		const messageOfficial = `Je viens de cartographier ma constellation fraternelle ! ✨ Avec ${siblingsListText}, cela fait déjà ${yearsSharedText} que nous partageons nos vies, nos rires et nos souvenirs.\n\nComme moi, visualisez vos liens uniques et soutenez l'action de SOS Villages d'Enfants pour que chaque fratrie grandisse ensemble. 💙 #SOSVillagesdEnfants #LiensFraternels https://www.sosve.org`;
+		const messageOfficial = `Je viens de cartographier ma constellation fraternelle ! ✨ Avec ${siblingsListText}, cela fait déjà ${yearsSharedText} que nous partageons nos vies, nos rires et nos souvenirs.\n\nComme moi, visualisez vos liens uniques et soutenez l'action de Fondation Villages d'Enfance Ensemble pour que chaque fratrie grandisse ensemble. 💙 #FondationVillagesdEnfanceEnsemble #LiensFraternels https://fondationvee.org/`;
 
 		shareTextPreview.value = messageOfficial;
 
 		const urlEncodedMessage = encodeURIComponent(messageOfficial);
-		const shareUrl = encodeURIComponent("https://www.sosve.org");
+		const shareUrl = encodeURIComponent("https://fondationvee.org/");
 
 		document.getElementById("share-twitter").href =
 			`https://twitter.com/intent/tweet?text=${urlEncodedMessage}`;
