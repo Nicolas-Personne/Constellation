@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	canvas.height = CANVAS_SIZE;
 
 	// Registre global des nœuds de la constellation
-	// Structure d'un nœud : { label: string, x: num, y: num, size: num, angle: num, originStep: num }
+	// Structure d'un nœud : { id: string, label: string, x: num, y: num, size: num, angle: num, originStep: num }
 	let graphNodes = [];
 
 	function clearCanvas() {
@@ -68,6 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 		captureIdentityAndSiblings();
 		buildDynamicInputs();
+		calculateSharedYears(); // Calcul initial lors du passage à l'étape 2
 		transitionTo(step1, step2);
 		renderGraph();
 	});
@@ -132,14 +133,14 @@ document.addEventListener("DOMContentLoaded", () => {
 		const userFirstname =
 			document.getElementById("user-firstname").value.trim() || "Moi";
 
-		// Nœud central utilisateur (Étape 1)
-		createSmartNode(userFirstname, 26 + Math.random() * 6, 1);
+		// Nœud central utilisateur (Étape 1) - ID unique
+		createSmartNode("user-main", userFirstname, 26 + Math.random() * 6, 1);
 
 		// Nœuds de la fratrie (Étape 1)
-		document.querySelectorAll(".sibling-name-input").forEach((input) => {
+		document.querySelectorAll(".sibling-name-input").forEach((input, index) => {
 			const name = input.value.trim();
 			if (name) {
-				createSmartNode(name, 18 + Math.random() * 6, 1);
+				createSmartNode(`sib-${index}`, name, 18 + Math.random() * 6, 1);
 			}
 		});
 	}
@@ -147,7 +148,11 @@ document.addEventListener("DOMContentLoaded", () => {
 	// =========================================================================
 	// 4. ALGORITHME DE RÉPULSION GÉOMÉTRIQUE (Anti-collision)
 	// =========================================================================
-	function createSmartNode(labelText, chosenSize, stepId) {
+	function createSmartNode(nodeId, labelText, chosenSize, stepId) {
+		// CORRECTION : Si un nœud possédant le même ID existe déjà (ex: modification de date),
+		// on le supprime avant de recalculer sa position pour éviter l'effet de duplication.
+		graphNodes = graphNodes.filter((node) => node.id !== nodeId);
+
 		const center = CANVAS_SIZE / 2;
 		const maxRadius = 250;
 		let x,
@@ -178,6 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		const finalAngle = Math.atan2(y - center, x - center);
 
 		graphNodes.push({
+			id: nodeId,
 			label: labelText,
 			x: x,
 			y: y,
@@ -198,7 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		// Exclusion du point 0 (Moi) pour générer les formulaires des frères/sœurs
 		const siblings = graphNodes.slice(1);
 
-		siblings.forEach((sib) => {
+		siblings.forEach((sib, index) => {
 			// Étape 2 : Bloc Date UX Intuitif
 			const blockDate = document.createElement("div");
 			blockDate.className = "sibling-block";
@@ -208,13 +214,22 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
 			siblingDatesContainer.appendChild(blockDate);
 
+			// CORRECTION : Écouteur basé sur 'change' pour capturer nativement la sélection du calendrier
 			blockDate
 				.querySelector(".sib-date-input")
 				.addEventListener("change", (e) => {
 					if (e.target.value) {
 						const year = e.target.value.split("-")[0];
-						// CORRECTION DISCRETE : Affichage uniquement de l'année (ex: "2002") pour éviter de dépasser
-						handleLiveTextInput(year, 2);
+						if (year && year.length === 4) {
+							// On vérifie que l'année saisie est complète
+							handleLiveTextInput(`date-${index}`, year, 2);
+						}
+					} else {
+						// Si le champ est vidé, on retire le nœud
+						graphNodes = graphNodes.filter(
+							(node) => node.id !== `date-${index}`,
+						);
+						renderGraph();
 					}
 				});
 
@@ -224,11 +239,28 @@ document.addEventListener("DOMContentLoaded", () => {
 			blockMem.innerHTML = `
                 <div class="sib-header">${sib.label}</div>
                 <ul>
-                    <li><input type="text" class="live-input memory-in" placeholder="Un lieu cher..."></li>
-                    <li><input type="text" class="live-input memory-in" placeholder="Un souvenir marquant..."></li>
+                    <li><input type="text" class="live-input memory-in-${index}-1" placeholder="Un lieu cher..."></li>
+                    <li><input type="text" class="live-input memory-in-${index}-2" placeholder="Un souvenir marquant..."></li>
                 </ul>
             `;
 			siblingMemoriesContainer.appendChild(blockMem);
+
+			blockMem
+				.querySelectorAll(`[class^="live-input memory-in-${index}"]`)
+				.forEach((input, inputIdx) => {
+					input.addEventListener("blur", (e) => {
+						const text = e.target.value.trim();
+						if (text) {
+							handleLiveTextInput(`mem-${index}-${inputIdx}`, text, 3);
+						} else {
+							// Nettoyage si l'utilisateur efface son texte entièrement
+							graphNodes = graphNodes.filter(
+								(node) => node.id !== `mem-${index}-${inputIdx}`,
+							);
+							renderGraph();
+						}
+					});
+				});
 
 			// Étape 4 : Blocs Mots-clés
 			const blockKey = document.createElement("div");
@@ -236,49 +268,62 @@ document.addEventListener("DOMContentLoaded", () => {
 			blockKey.innerHTML = `
                 <div class="sib-header">${sib.label}</div>
                 <ul>
-                    <li><input type="text" class="live-input keyword-in" placeholder="Ex: Complicité"></li>
-                    <li><input type="text" class="live-input keyword-in" placeholder="Ex: Rires"></li>
+                    <li><input type="text" class="live-input keyword-in-${index}-1" placeholder="Ex: Complicité"></li>
+                    <li><input type="text" class="live-input keyword-in-${index}-2" placeholder="Ex: Rires"></li>
                 </ul>
             `;
 			siblingKeywordsContainer.appendChild(blockKey);
-		});
 
-		// Activation des écouteurs "blur" avec attribution stricte du stepId
-		document.querySelectorAll(".memory-in").forEach((input) => {
-			input.addEventListener("blur", (e) => {
-				const text = e.target.value.trim();
-				if (text) handleLiveTextInput(text, 3);
-			});
-		});
-
-		document.querySelectorAll(".keyword-in").forEach((input) => {
-			input.addEventListener("blur", (e) => {
-				const text = e.target.value.trim();
-				if (text) handleLiveTextInput(text, 4);
-			});
+			blockKey
+				.querySelectorAll(`[class^="live-input keyword-in-${index}"]`)
+				.forEach((input, inputIdx) => {
+					input.addEventListener("blur", (e) => {
+						const text = e.target.value.trim();
+						if (text) {
+							handleLiveTextInput(`key-${index}-${inputIdx}`, text, 4);
+						} else {
+							// Nettoyage si l'utilisateur efface son texte entièrement
+							graphNodes = graphNodes.filter(
+								(node) => node.id !== `key-${index}-${inputIdx}`,
+							);
+							renderGraph();
+						}
+					});
+				});
 		});
 	}
 
-	function handleLiveTextInput(text, stepId) {
-		// Bloque les doublons textuels sur la zone d'affichage
-		if (graphNodes.some((n) => n.label === text)) return;
-
+	function handleLiveTextInput(nodeId, text, stepId) {
 		// Distribution de taille asymétrique (gros et petits points entremêlés)
 		const dynamicSize = 5 + Math.random() * Math.random() * 34;
-		createSmartNode(text, dynamicSize, stepId);
+		createSmartNode(nodeId, text, dynamicSize, stepId);
 		renderGraph();
 	}
 
+	// CORRECTIF D'INTERFAÇAGE : Extraction des données depuis les balises <select>
 	function calculateSharedYears() {
-		const inputUser = document.querySelector(".user-birth-date").value;
-		let userYear = 2000;
-		if (inputUser) {
-			userYear = parseInt(inputUser.split("-")[0], 10);
+		const yearSelect = document.getElementById("user-birth-year");
+		let userYear = parseInt(yearSelect.value, 10);
+
+		if (isNaN(userYear)) {
+			userYear = 2000; // Année de repli sécuritaire
 		}
+
 		const currentYear = new Date().getFullYear();
-		document.getElementById("years-shared").textContent =
-			`${currentYear - userYear} ans`;
+		const sharedYears = currentYear - userYear;
+		document.getElementById("years-shared").textContent = `${sharedYears} ans`;
+
+		// Mise à jour de l'étiquette centrale de l'utilisateur sur le canvas
+		const userFirstname =
+			document.getElementById("user-firstname").value.trim() || "Moi";
+		createSmartNode("user-main", `${userFirstname} (${userYear})`, 30, 1);
+		renderGraph();
 	}
+
+	// Écouteur pour mettre à jour la constellation dès que l'étudiant change l'année
+	document
+		.getElementById("user-birth-year")
+		.addEventListener("change", calculateSharedYears);
 
 	// =========================================================================
 	// 6. MOTEUR DE RENDU (Masquage Anti-chevauchement / Masque Invisible)
@@ -347,8 +392,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				ctx.textAlign = "center";
 			}
 
-			// TECHNIQUE DU MASQUE INVISIBLE : Trace un contour noir épais sous le texte
-			// Cela coupe proprement les lignes blanches qui passent à l'arrière-plan immédiat des lettres
+			// TECHNIQUE DU MASQUE INVISIBLE
 			ctx.strokeStyle = "#000000";
 			ctx.lineWidth = 5;
 			ctx.strokeText(node.label, textX, textY);
@@ -369,13 +413,11 @@ document.addEventListener("DOMContentLoaded", () => {
 	const shareTextPreview = document.getElementById("share-text-preview");
 
 	function openShareModal() {
-		// 1. Récupération des variables dynamiques pour le texte final
 		const userFirstname =
 			document.getElementById("user-firstname").value.trim() || "Moi";
 		const nbSiblings = parseInt(nbSiblingsSelect.value, 10);
 		const yearsSharedText = document.getElementById("years-shared").textContent;
 
-		// Extraction propre des prénoms saisis pour le récapitulatif
 		let siblingNames = [];
 		document.querySelectorAll(".sibling-name-input").forEach((input) => {
 			if (input.value.trim()) siblingNames.push(input.value.trim());
@@ -385,13 +427,10 @@ document.addEventListener("DOMContentLoaded", () => {
 				? siblingNames.join(", ")
 				: `${nbSiblings} frères/sœurs`;
 
-		// 2. Rédaction du message officiel de soutien à l'association
 		const messageOfficial = `Je viens de cartographier ma constellation fraternelle ! ✨ Avec ${siblingsListText}, cela fait déjà ${yearsSharedText} que nous partageons nos vies, nos rires et nos souvenirs.\n\nComme moi, visualisez vos liens uniques et soutenez l'action de SOS Villages d'Enfants pour que chaque fratrie grandisse ensemble. 💙 #SOSVillagesdEnfants #LiensFraternels https://www.sosve.org`;
 
-		// Injection dans le conteneur visuel de la modale
 		shareTextPreview.value = messageOfficial;
 
-		// 3. Encodage des URLs de redirection des réseaux sociaux (Web intents)
 		const urlEncodedMessage = encodeURIComponent(messageOfficial);
 		const shareUrl = encodeURIComponent("https://www.sosve.org");
 
@@ -404,11 +443,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		document.getElementById("share-whatsapp").href =
 			`https://api.whatsapp.com/send?text=${urlEncodedMessage}`;
 
-		// Affiche le composant modale
 		shareModal.style.display = "flex";
 	}
 
-	// Fermetures de la modale
 	closeScaleBtn.addEventListener("click", () => {
 		shareModal.style.display = "none";
 	});
@@ -416,10 +453,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		if (e.target === shareModal) shareModal.style.display = "none";
 	});
 
-	// Action : Copier le texte dans le presse-papier
 	document.getElementById("btn-copy-text").addEventListener("click", () => {
 		shareTextPreview.select();
-		shareTextPreview.setSelectionRange(0, 99999); // Support tactiles
+		shareTextPreview.setSelectionRange(0, 99999);
 
 		navigator.clipboard
 			.writeText(shareTextPreview.value)

@@ -582,7 +582,23 @@ canvas {
 .share-network-btn.whatsapp {
 	background-color: #25d366;
 }
+/* Alignement du bloc Date de Naissance (Jour / Mois / Année) */
+.birthdate-ux-container {
+	display: flex;
+	gap: 10px;
+	width: 100%;
+}
 
+/* Style individuel de chaque menu déroulant de la date */
+.birthdate-ux-container .date-part {
+	flex: 1;
+	min-width: 0; /* Évite les débordements sur petit écran */
+}
+
+/* Espacement spécifique pour le bouton de validation final de l'étape 4 */
+.footer-padding {
+	padding-bottom: 48px;
+}
 .modal-tip {
 	margin-top: 20px;
 	background: rgba(255, 255, 255, 0.15);
