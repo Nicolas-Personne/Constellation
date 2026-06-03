@@ -22,14 +22,14 @@
 
 body {
 	font-family: var(--font-main);
-	background-color: #0d1117; /* Fond sombre élégant pour faire ressortir la constellation */
+	background-color: #0d1117;
 	color: var(--white);
 	min-height: 100vh;
 	overflow-x: hidden;
 }
 
 /* =========================================================================
-   2. CONFIGURATION DU LAYOUT DE L'APPLICATION (Split Screen)
+   2. LAYOUT APPLICATIF (Split Screen)
    ========================================================================= */
 .app-container {
 	display: flex;
@@ -38,7 +38,6 @@ body {
 	overflow: hidden;
 }
 
-/* Colonne Gauche : Le Rendu Visuel Fixe */
 .left-column {
 	width: 50%;
 	height: 100%;
@@ -73,7 +72,6 @@ canvas {
 	gap: 15px;
 }
 
-/* Colonne Droite : Le Formulaire Défilant */
 .right-column {
 	width: 50%;
 	height: 100%;
@@ -93,7 +91,7 @@ canvas {
 }
 
 /* =========================================================================
-   3. DESIGN DES BOUTONS & NAVIGATION MULTI-STEP
+   3. STRATÉGIE BOUTONS & NAVIGATION MULTI-STEP
    ========================================================================= */
 .btn-start,
 .btn-suite,
@@ -131,7 +129,6 @@ canvas {
 	width: 100%;
 }
 
-/* Bouton Retour Graphique */
 .btn-back {
 	background: transparent;
 	border: 2px solid rgba(255, 255, 255, 0.6);
@@ -164,7 +161,7 @@ canvas {
 }
 
 /* =========================================================================
-   4. COMPOSANTS DE FORMULAIRE & CORRECTION PLACEHOLDERS
+   4. FORMULAIRES & CORRECTIFS FORCE-PLACEHOLDERS
    ========================================================================= */
 .step-section {
 	animation: fadeIn 0.4s ease-out forwards;
@@ -220,16 +217,16 @@ canvas {
 	background: rgba(255, 255, 255, 0.25);
 }
 
-/* CORRECTION DE LA COULEUR ET OPACITÉ DU PLACEHOLDER */
+/* CORRECTIF TOTAL COULEUR DU PLACEHOLDER */
 .field-input::placeholder,
 .live-input::placeholder,
 .pill-input::placeholder {
 	color: rgba(255, 255, 255, 0.7) !important;
-	opacity: 1 !important; /* Requis pour écraser le rendu par défaut de Firefox */
+	opacity: 1 !important;
 }
 
 /* =========================================================================
-   5. COMPOSANTS SPECIFIQUES (Date UX, Grilles de blocs & Tags)
+   5. DATE UX NATIF & COMPOSANTS DYNAMIQUES
    ========================================================================= */
 .inline-row {
 	display: flex;
@@ -251,7 +248,6 @@ canvas {
 	cursor: pointer;
 }
 
-/* INPUT DATE OPTIMISÉ VISUELLEMENT */
 .date-ux-input {
 	background: rgba(255, 255, 255, 0.12);
 	border: 2px solid var(--white);
@@ -268,7 +264,7 @@ canvas {
 }
 
 .date-ux-input::-webkit-calendar-picker-indicator {
-	filter: invert(1); /* Rend le pictogramme calendrier blanc */
+	filter: invert(1);
 	cursor: pointer;
 }
 
@@ -298,7 +294,6 @@ canvas {
 	font-size: 13px;
 }
 
-/* Grilles pour les étapes Souvenirs & Mots-clés */
 .siblings-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -364,8 +359,14 @@ canvas {
 	outline: none;
 }
 
+.memory-label {
+	font-size: 14px;
+	margin-bottom: 10px;
+	opacity: 0.95;
+}
+
 /* =========================================================================
-   6. ÉLÉMENTS DE DÉCORATION & HERO BLOCK
+   6. IDENTITÉ VISUELLE & HERO BLOCKS
    ========================================================================= */
 .hero h1 {
 	font-size: 32px;
@@ -444,11 +445,160 @@ canvas {
 	}
 }
 
-/* Responsive basique pour écrans intermédiaires */
+/* =========================================================================
+   7. MODALE DE PARTAGE SOCIAL CRÉÉE DYNAMIQUEMENT
+   ========================================================================= */
+.modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background: rgba(0, 0, 0, 0.75);
+	backdrop-filter: blur(5px);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 9999;
+	animation: fadeIn 0.3s ease-out forwards;
+}
+
+.modal-card {
+	background: linear-gradient(135deg, #148cb8, #1ab0e8);
+	width: 90%;
+	max-width: 500px;
+	border-radius: 20px;
+	padding: 30px;
+	box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+	border: 2px solid rgba(255, 255, 255, 0.2);
+	position: relative;
+	color: var(--white);
+}
+
+.modal-close-btn {
+	position: absolute;
+	top: 15px;
+	right: 20px;
+	background: transparent;
+	border: none;
+	color: var(--white);
+	font-size: 30px;
+	cursor: pointer;
+	opacity: 0.7;
+	transition: opacity 0.2s;
+}
+.modal-close-btn:hover {
+	opacity: 1;
+}
+
+.modal-header h2 {
+	font-size: 24px;
+	font-weight: 800;
+	margin-bottom: 8px;
+}
+.modal-header p {
+	font-size: 14px;
+	opacity: 0.9;
+	line-height: 1.4;
+	margin-bottom: 20px;
+}
+
+.modal-label {
+	display: block;
+	font-size: 13px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin-bottom: 6px;
+}
+
+.modal-textarea {
+	width: 100%;
+	height: 100px;
+	background: rgba(0, 0, 0, 0.2);
+	border: 1px solid rgba(255, 255, 255, 0.4);
+	border-radius: 10px;
+	padding: 12px;
+	color: var(--white);
+	font-family: var(--font-main);
+	font-size: 14px;
+	resize: none;
+	outline: none;
+	margin-bottom: 10px;
+}
+
+.btn-copy {
+	background: var(--yellow);
+	color: #332000;
+	border: none;
+	width: 100%;
+	padding: 10px;
+	border-radius: 8px;
+	font-weight: 700;
+	cursor: pointer;
+	font-size: 14px;
+	margin-bottom: 20px;
+	transition: transform 0.15s;
+}
+.btn-copy:active {
+	transform: scale(0.98);
+}
+
+.share-networks-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.share-network-btn {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 12px;
+	border-radius: 10px;
+	text-decoration: none;
+	color: white;
+	font-weight: 700;
+	font-size: 13px;
+	text-align: center;
+	transition:
+		transform 0.2s,
+		filter 0.2s;
+}
+.share-network-btn:hover {
+	transform: translateY(-2px);
+	filter: brightness(1.1);
+}
+
+.share-network-btn.twitter {
+	background-color: #1da1f2;
+}
+.share-network-btn.facebook {
+	background-color: #1877f2;
+}
+.share-network-btn.linkedin {
+	background-color: #0077b5;
+}
+.share-network-btn.whatsapp {
+	background-color: #25d366;
+}
+
+.modal-tip {
+	margin-top: 20px;
+	background: rgba(255, 255, 255, 0.15);
+	padding: 12px;
+	border-radius: 10px;
+	font-size: 12px;
+	line-height: 1.4;
+	border-left: 4px solid var(--yellow);
+}
+
+/* RESPONSIVE TABLETTE & MOBILE */
 @media (max-width: 900px) {
 	.app-container {
 		flex-direction: column;
-		overflow: linear;
+		overflow: visible;
+		height: auto;
 	}
 	.left-column,
 	.right-column {
@@ -460,5 +610,12 @@ canvas {
 		top: 0;
 		z-index: 10;
 		height: 45vh;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+	}
+	#canvas-container {
+		max-width: 280px;
+	}
+	.right-column {
+		overflow-y: visible;
 	}
 }

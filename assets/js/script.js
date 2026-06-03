@@ -17,10 +17,13 @@ document.addEventListener("DOMContentLoaded", () => {
 		"sibling-keywords-container",
 	);
 
+	// Taille virtuelle fixe pour maintenir le calcul des équations géométriques homogène
 	const CANVAS_SIZE = 800;
 	canvas.width = CANVAS_SIZE;
 	canvas.height = CANVAS_SIZE;
 
+	// Registre global des nœuds de la constellation
+	// Structure d'un nœud : { label: string, x: num, y: num, size: num, angle: num, originStep: num }
 	let graphNodes = [];
 
 	function clearCanvas() {
@@ -43,17 +46,20 @@ document.addEventListener("DOMContentLoaded", () => {
 		toStep.style.display = "block";
 	}
 
+	// Efface chirurgicalement les ronds créés à une étape précise lors d'un clic "Retour"
 	function purgeNodesFromStep(stepNumber) {
 		graphNodes = graphNodes.filter((node) => node.originStep !== stepNumber);
 		renderGraph();
 	}
 
+	// --- Accueil -> Étape 1 ---
 	document
 		.getElementById("start-adventure-btn")
 		.addEventListener("click", () => {
 			transitionTo(stepWelcome, step1);
 		});
 
+	// --- Étape 1 -> Étape 2 ---
 	document.getElementById("btn-goto-step2").addEventListener("click", () => {
 		const uName = document.getElementById("user-firstname").value.trim();
 		if (!uName) {
@@ -66,38 +72,42 @@ document.addEventListener("DOMContentLoaded", () => {
 		renderGraph();
 	});
 
+	// --- Étape 2 -> Étape 1 (Retour) ---
 	document.getElementById("btn-back-to-step1").addEventListener("click", () => {
-		purgeNodesFromStep(1);
-		purgeNodesFromStep(2);
+		purgeNodesFromStep(1); // Efface "Moi" et les frères/sœurs du canvas
+		purgeNodesFromStep(2); // Purge de sécurité si des dates existaient déjà
 		transitionTo(step2, step1);
 	});
 
+	// --- Étape 2 -> Étape 3 ---
 	document.getElementById("btn-goto-step3").addEventListener("click", () => {
 		calculateSharedYears();
 		transitionTo(step2, step3);
 	});
 
+	// --- Étape 3 -> Étape 2 (Retour) ---
 	document.getElementById("btn-back-to-step2").addEventListener("click", () => {
-		purgeNodesFromStep(2);
+		purgeNodesFromStep(2); // Supprime les ronds des années
 		transitionTo(step3, step2);
 	});
 
+	// --- Étape 3 -> Étape 4 ---
 	document.getElementById("btn-goto-step4").addEventListener("click", () => {
 		transitionTo(step3, step4);
 	});
 
+	// --- Étape 4 -> Étape 3 (Retour) ---
 	document.getElementById("btn-back-to-step3").addEventListener("click", () => {
-		purgeNodesFromStep(3);
+		purgeNodesFromStep(3); // Supprime les ronds de souvenirs
 		transitionTo(step4, step3);
 	});
 
+	// --- Bouton Finalisation Définitive -> Ouverture de la Modale ---
 	document
 		.getElementById("btn-generate-final")
 		.addEventListener("click", () => {
 			renderGraph();
-			alert(
-				"Magnifique ! Ta constellation familiale interconnectée est entièrement générée.",
-			);
+			openShareModal();
 		});
 
 	// =========================================================================
@@ -118,12 +128,14 @@ document.addEventListener("DOMContentLoaded", () => {
 	updateNamesLayout();
 
 	function captureIdentityAndSiblings() {
-		graphNodes = [];
+		graphNodes = []; // Réinitialisation complète
 		const userFirstname =
 			document.getElementById("user-firstname").value.trim() || "Moi";
 
+		// Nœud central utilisateur (Étape 1)
 		createSmartNode(userFirstname, 26 + Math.random() * 6, 1);
 
+		// Nœuds de la fratrie (Étape 1)
 		document.querySelectorAll(".sibling-name-input").forEach((input) => {
 			const name = input.value.trim();
 			if (name) {
@@ -142,15 +154,19 @@ document.addEventListener("DOMContentLoaded", () => {
 			y,
 			attempts = 0,
 			minDistanceFound = 0;
+
+		// Zone tampon minimale (en pixels) requise pour qu'un mot ne chevauche pas un autre
 		const safetyMargin = 105;
 
 		do {
+			// Distribution polaire en disque pour éviter l'alignement matriciel rigide
 			const angle = Math.random() * Math.PI * 2;
 			const radius = 60 + Math.random() * maxRadius;
 			x = center + Math.cos(angle) * radius;
 			y = center + Math.sin(angle) * radius;
 
 			minDistanceFound = Infinity;
+			// Comparaison vectorielle avec tous les éléments déjà implantés
 			for (let node of graphNodes) {
 				const dist = Math.hypot(x - node.x, y - node.y);
 				if (dist < minDistanceFound) minDistanceFound = dist;
@@ -158,6 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			attempts++;
 		} while (minDistanceFound < safetyMargin && attempts < 150);
 
+		// Calcul de l'angle d'orientation par rapport au centre absolu du cadre
 		const finalAngle = Math.atan2(y - center, x - center);
 
 		graphNodes.push({
@@ -178,10 +195,11 @@ document.addEventListener("DOMContentLoaded", () => {
 		siblingMemoriesContainer.innerHTML = "";
 		siblingKeywordsContainer.innerHTML = "";
 
+		// Exclusion du point 0 (Moi) pour générer les formulaires des frères/sœurs
 		const siblings = graphNodes.slice(1);
 
 		siblings.forEach((sib) => {
-			// Étape 2 : Bloc Date
+			// Étape 2 : Bloc Date UX Intuitif
 			const blockDate = document.createElement("div");
 			blockDate.className = "sibling-block";
 			blockDate.innerHTML = `
@@ -195,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				.addEventListener("change", (e) => {
 					if (e.target.value) {
 						const year = e.target.value.split("-")[0];
-						// CORRECTION CORTE : On affiche uniquement l'année (ex: "2002") pour éviter le débordement
+						// CORRECTION DISCRETE : Affichage uniquement de l'année (ex: "2002") pour éviter de dépasser
 						handleLiveTextInput(year, 2);
 					}
 				});
@@ -225,6 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			siblingKeywordsContainer.appendChild(blockKey);
 		});
 
+		// Activation des écouteurs "blur" avec attribution stricte du stepId
 		document.querySelectorAll(".memory-in").forEach((input) => {
 			input.addEventListener("blur", (e) => {
 				const text = e.target.value.trim();
@@ -241,8 +260,10 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 
 	function handleLiveTextInput(text, stepId) {
+		// Bloque les doublons textuels sur la zone d'affichage
 		if (graphNodes.some((n) => n.label === text)) return;
 
+		// Distribution de taille asymétrique (gros et petits points entremêlés)
 		const dynamicSize = 5 + Math.random() * Math.random() * 34;
 		createSmartNode(text, dynamicSize, stepId);
 		renderGraph();
@@ -260,7 +281,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 
 	// =========================================================================
-	// 6. MOTEUR DE RENDU (Masquage Anti-chevauchement)
+	// 6. MOTEUR DE RENDU (Masquage Anti-chevauchement / Masque Invisible)
 	// =========================================================================
 	function renderGraph() {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -268,7 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		if (graphNodes.length < 1) return;
 
-		// --- Lignes de maillage ---
+		// --- PASSE A : Le Maillage Interconnecté ---
 		for (let i = 0; i < graphNodes.length; i++) {
 			for (let j = i + 1; j < graphNodes.length; j++) {
 				const nodeA = graphNodes[i];
@@ -276,9 +297,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 				const distance = Math.hypot(nodeB.x - nodeA.x, nodeB.y - nodeA.y);
 
+				// Opacité et épaisseur calculées par rapport à la distance (Profondeur cosmique)
 				let opacity = Math.max(0.12, 0.75 - distance / CANVAS_SIZE);
 				let lineWidth = Math.max(0.6, 3.8 - distance / 180);
 
+				// Valorise l'épaisseur si deux nœuds majeurs se croisent
 				if (nodeA.size > 20 && nodeB.size > 20) {
 					lineWidth += 1.2;
 					opacity = Math.min(1, opacity + 0.15);
@@ -293,7 +316,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 		}
 
-		// --- Disques blancs ---
+		// --- PASSE B : Les Étoiles (Disques Blancs) ---
 		graphNodes.forEach((node) => {
 			ctx.beginPath();
 			ctx.fillStyle = "#ffffff";
@@ -301,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			ctx.fill();
 		});
 
-		// --- Textes avec masque noir ---
+		// --- PASSE C : Les Noms (Masquage & Projection Polaire) ---
 		graphNodes.forEach((node) => {
 			ctx.save();
 			ctx.font = "italic 700 15px 'Nunito', sans-serif";
@@ -310,10 +333,12 @@ document.addEventListener("DOMContentLoaded", () => {
 			const cos = Math.cos(node.angle);
 			const sin = Math.sin(node.angle);
 
+			// Écartement du label calculé selon le diamètre de l'étoile
 			const textGap = node.size + 12;
 			const textX = node.x + cos * textGap;
 			const textY = node.y + sin * textGap;
 
+			// Alignement intelligent dynamique
 			if (cos > 0.3) {
 				ctx.textAlign = "left";
 			} else if (cos < -0.3) {
@@ -322,10 +347,13 @@ document.addEventListener("DOMContentLoaded", () => {
 				ctx.textAlign = "center";
 			}
 
+			// TECHNIQUE DU MASQUE INVISIBLE : Trace un contour noir épais sous le texte
+			// Cela coupe proprement les lignes blanches qui passent à l'arrière-plan immédiat des lettres
 			ctx.strokeStyle = "#000000";
 			ctx.lineWidth = 5;
 			ctx.strokeText(node.label, textX, textY);
 
+			// Impression finale des lettres en blanc pur
 			ctx.fillStyle = "#ffffff";
 			ctx.fillText(node.label, textX, textY);
 
@@ -334,7 +362,88 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 
 	// =========================================================================
-	// 7. MODULES DE TÉLÉCHARGEMENT ET RESET GLOBAL
+	// 7. MODULE DE PARTAGE, RÉCAPITULATIF ET MODALE FINALE
+	// =========================================================================
+	const shareModal = document.getElementById("share-modal");
+	const closeScaleBtn = document.getElementById("close-modal-btn");
+	const shareTextPreview = document.getElementById("share-text-preview");
+
+	function openShareModal() {
+		// 1. Récupération des variables dynamiques pour le texte final
+		const userFirstname =
+			document.getElementById("user-firstname").value.trim() || "Moi";
+		const nbSiblings = parseInt(nbSiblingsSelect.value, 10);
+		const yearsSharedText = document.getElementById("years-shared").textContent;
+
+		// Extraction propre des prénoms saisis pour le récapitulatif
+		let siblingNames = [];
+		document.querySelectorAll(".sibling-name-input").forEach((input) => {
+			if (input.value.trim()) siblingNames.push(input.value.trim());
+		});
+		const siblingsListText =
+			siblingNames.length > 0
+				? siblingNames.join(", ")
+				: `${nbSiblings} frères/sœurs`;
+
+		// 2. Rédaction du message officiel de soutien à l'association
+		const messageOfficial = `Je viens de cartographier ma constellation fraternelle ! ✨ Avec ${siblingsListText}, cela fait déjà ${yearsSharedText} que nous partageons nos vies, nos rires et nos souvenirs.\n\nComme moi, visualisez vos liens uniques et soutenez l'action de SOS Villages d'Enfants pour que chaque fratrie grandisse ensemble. 💙 #SOSVillagesdEnfants #LiensFraternels https://www.sosve.org`;
+
+		// Injection dans le conteneur visuel de la modale
+		shareTextPreview.value = messageOfficial;
+
+		// 3. Encodage des URLs de redirection des réseaux sociaux (Web intents)
+		const urlEncodedMessage = encodeURIComponent(messageOfficial);
+		const shareUrl = encodeURIComponent("https://www.sosve.org");
+
+		document.getElementById("share-twitter").href =
+			`https://twitter.com/intent/tweet?text=${urlEncodedMessage}`;
+		document.getElementById("share-facebook").href =
+			`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
+		document.getElementById("share-linkedin").href =
+			`https://www.linkedin.com/sharing/share-offsite/?u=${shareUrl}`;
+		document.getElementById("share-whatsapp").href =
+			`https://api.whatsapp.com/send?text=${urlEncodedMessage}`;
+
+		// Affiche le composant modale
+		shareModal.style.display = "flex";
+	}
+
+	// Fermetures de la modale
+	closeScaleBtn.addEventListener("click", () => {
+		shareModal.style.display = "none";
+	});
+	shareModal.addEventListener("click", (e) => {
+		if (e.target === shareModal) shareModal.style.display = "none";
+	});
+
+	// Action : Copier le texte dans le presse-papier
+	document.getElementById("btn-copy-text").addEventListener("click", () => {
+		shareTextPreview.select();
+		shareTextPreview.setSelectionRange(0, 99999); // Support tactiles
+
+		navigator.clipboard
+			.writeText(shareTextPreview.value)
+			.then(() => {
+				const copyBtn = document.getElementById("btn-copy-text");
+				copyBtn.textContent = "Copié ! En route pour vos réseaux... ✅";
+				copyBtn.style.backgroundColor = "#25D366";
+				copyBtn.style.color = "#ffffff";
+
+				setTimeout(() => {
+					copyBtn.textContent = "Copier le message 📋";
+					copyBtn.style.backgroundColor = "var(--yellow)";
+					copyBtn.style.color = "#332000";
+				}, 2500);
+			})
+			.catch(() => {
+				alert(
+					"Erreur lors de la copie automatique, vous pouvez copier le texte manuellement.",
+				);
+			});
+	});
+
+	// =========================================================================
+	// 8. MODULES DE TÉLÉCHARGEMENT ET RESET GLOBAL
 	// =========================================================================
 	document.getElementById("download-btn").addEventListener("click", () => {
 		const link = document.createElement("a");

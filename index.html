@@ -3,7 +3,8 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Visualizer de liens fraternels</title>
+		<title>Visualizer de liens fraternels - SOS Villages d'Enfants</title>
+		<!-- Polices Google Fonts -->
 		<link
 			href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap"
 			rel="stylesheet"
@@ -12,6 +13,7 @@
 	</head>
 	<body>
 		<div class="app-container">
+			<!-- COLONNE GAUCHE : CANVAS & ACTIONS D'IMAGE -->
 			<div class="left-column">
 				<div id="canvas-container">
 					<canvas id="constellation"></canvas>
@@ -24,8 +26,10 @@
 				</div>
 			</div>
 
+			<!-- COLONNE DROITE : FORMULAIRE SÉQUENTIEL -->
 			<div class="right-column">
 				<div class="page-wrapper">
+					<!-- ACCUEIL -->
 					<div class="hero step-section" id="step-welcome">
 						<div class="logo-badge">
 							<div class="logo-icon">
@@ -37,7 +41,6 @@
 							</div>
 							<span>SOS VILLAGES<br />D'ENFANTS</span>
 						</div>
-
 						<h1>
 							Bienvenue dans le <span class="script">visualizer</span><br />de
 							liens fraternels...
@@ -47,14 +50,19 @@
 						</button>
 						<div class="hero-footer">
 							Cette expérience vous est proposée par<br />l'association
-							<a href="#">SOS Villages d'Enfants.</a>
+							<a href="#" target="_blank" rel="noopener"
+								>SOS Villages d'Enfants.</a
+							>
 						</div>
 					</div>
 
+					<!-- ETAPE 1 : IDENTITÉ -->
 					<div class="section step-section" id="step-1" style="display: none">
 						<span class="section-label">Faisons connaissance !</span>
 						<div class="field-group">
-							<label class="field-label">Ton prénom :</label>
+							<label class="field-label" for="user-firstname"
+								>Ton prénom :</label
+							>
 							<input
 								type="text"
 								id="user-firstname"
@@ -64,9 +72,10 @@
 							/>
 						</div>
 						<div class="field-group">
-							<label class="field-label">Adresse mail :</label>
+							<label class="field-label" for="user-email">Adresse mail :</label>
 							<input
 								type="email"
+								id="user-email"
 								class="field-input"
 								placeholder="exemple@mail.com"
 							/>
@@ -74,7 +83,11 @@
 						<div class="field-group">
 							<div class="inline-row">
 								Tu as
-								<select class="select-pill" id="nb-siblings">
+								<select
+									class="select-pill"
+									id="nb-siblings"
+									aria-label="Nombre de frères et sœurs"
+								>
 									<option value="1">1</option>
 									<option value="2" selected>2</option>
 									<option value="3">3</option>
@@ -91,11 +104,16 @@
 						</div>
 					</div>
 
+					<!-- ETAPE 2 : DATES DE NAISSANCE -->
 					<div class="section step-section" id="step-2" style="display: none">
 						<span class="section-label purple">Parlons âge....</span>
 						<div class="field-group">
 							<label class="field-label">Ta date de naissance :</label>
-							<input type="date" class="date-ux-input user-birth-date" />
+							<input
+								type="date"
+								class="date-ux-input user-birth-date"
+								aria-label="Ta date de naissance"
+							/>
 						</div>
 						<div class="field-group">
 							<label class="field-label">Leurs dates de naissance :</label>
@@ -115,6 +133,7 @@
 						</div>
 					</div>
 
+					<!-- ETAPE 3 : SOUVENIRS -->
 					<div class="section step-section" id="step-3" style="display: none">
 						<span class="section-label orange"
 							>Il est temps de chercher dans tes souvenirs...</span
@@ -132,6 +151,7 @@
 						</div>
 					</div>
 
+					<!-- ETAPE 4 : MOTS-CLÉS -->
 					<div class="section step-section" id="step-4" style="display: none">
 						<span class="section-label yellow">Et pour finir</span>
 						<div class="memory-label">
@@ -146,13 +166,89 @@
 						>
 							<button class="btn-back" id="btn-back-to-step3">↩ Retour</button>
 							<button class="btn-suite" id="btn-generate-final">
-								Générer ma constellation définitive →
+								Générer ma constellation →
 							</button>
 						</div>
 					</div>
 				</div>
 			</div>
 		</div>
+
+		<!-- MODALE DE PARTAGE SUR LES RÉSEAUX -->
+		<div id="share-modal" class="modal-overlay" style="display: none">
+			<div class="modal-card">
+				<button
+					id="close-modal-btn"
+					class="modal-close-btn"
+					aria-label="Fermer la fenêtre"
+				>
+					&times;
+				</button>
+				<div class="modal-header">
+					<h2>✨ Partage ta constellation !</h2>
+					<p>
+						Félicitations, ta constellation est prête. Fais briller tes liens
+						fraternels et soutiens l'association.
+					</p>
+				</div>
+
+				<div class="modal-body">
+					<label class="modal-label" for="share-text-preview"
+						>Ton message de partage personnalisé :</label
+					>
+					<textarea
+						id="share-text-preview"
+						class="modal-textarea"
+						readonly
+					></textarea>
+
+					<button id="btn-copy-text" class="btn-copy">
+						Copier le message 📋
+					</button>
+
+					<div class="share-networks-grid">
+						<a
+							href="#"
+							id="share-twitter"
+							target="_blank"
+							rel="noopener"
+							class="share-network-btn twitter"
+							>Partager sur X</a
+						>
+						<a
+							href="#"
+							id="share-facebook"
+							target="_blank"
+							rel="noopener"
+							class="share-network-btn facebook"
+							>Partager sur Facebook</a
+						>
+						<a
+							href="#"
+							id="share-linkedin"
+							target="_blank"
+							rel="noopener"
+							class="share-network-btn linkedin"
+							>Partager sur LinkedIn</a
+						>
+						<a
+							href="#"
+							id="share-whatsapp"
+							target="_blank"
+							rel="noopener"
+							class="share-network-btn whatsapp"
+							>Par WhatsApp</a
+						>
+					</div>
+
+					<div class="modal-tip">
+						💡 **Astuce UX :** Pense à télécharger ton image avec le bouton 📥
+						pour l'ajouter à ta publication sur les réseaux !
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<script src="./assets/js/script.js"></script>
 	</body>
 </html>
