@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
 	// =========================================================================
-	// ANCRAGES & INITIALISATION CANVAS
+	// 1. CHASSIS TECHNIQUE ET ANCRAGE CANVAS
 	// =========================================================================
 	const canvas = document.getElementById("constellation");
 	const ctx = canvas.getContext("2d");
@@ -21,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
 	canvas.width = CANVAS_SIZE;
 	canvas.height = CANVAS_SIZE;
 
-	// Structure globale des points
 	let graphNodes = [];
 
 	function clearCanvas() {
@@ -31,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	clearCanvas();
 
 	// =========================================================================
-	// MOTEUR DU PARCOURS MULTI-STEP (NAVIGATION ÉTAPE PAR ÉTAPE)
+	// 2. LOGIQUE DU ROUTAGE MULTI-STEP ET HISTORIQUE D'ANNULATION
 	// =========================================================================
 	const stepWelcome = document.getElementById("step-welcome");
 	const step1 = document.getElementById("step-1");
@@ -39,52 +38,70 @@ document.addEventListener("DOMContentLoaded", () => {
 	const step3 = document.getElementById("step-3");
 	const step4 = document.getElementById("step-4");
 
-	// Bouton de l'accueil
+	function transitionTo(fromStep, toStep) {
+		fromStep.style.display = "none";
+		toStep.style.display = "block";
+	}
+
+	function purgeNodesFromStep(stepNumber) {
+		graphNodes = graphNodes.filter((node) => node.originStep !== stepNumber);
+		renderGraph();
+	}
+
 	document
 		.getElementById("start-adventure-btn")
 		.addEventListener("click", () => {
-			stepWelcome.style.display = "none";
-			step1.style.display = "block";
+			transitionTo(stepWelcome, step1);
 		});
 
-	// Étape 1 -> Étape 2
 	document.getElementById("btn-goto-step2").addEventListener("click", () => {
 		const uName = document.getElementById("user-firstname").value.trim();
 		if (!uName) {
-			alert("Veuillez entrer votre prénom pour continuer.");
+			alert("S'il te plaît, écris ton prénom pour commencer la constellation.");
 			return;
 		}
 		captureIdentityAndSiblings();
 		buildDynamicInputs();
-
-		step1.style.display = "none";
-		step2.style.display = "block";
+		transitionTo(step1, step2);
 		renderGraph();
 	});
 
-	// Étape 2 -> Étape 3
+	document.getElementById("btn-back-to-step1").addEventListener("click", () => {
+		purgeNodesFromStep(1);
+		purgeNodesFromStep(2);
+		transitionTo(step2, step1);
+	});
+
 	document.getElementById("btn-goto-step3").addEventListener("click", () => {
 		calculateSharedYears();
-		step2.style.display = "none";
-		step3.style.display = "block";
+		transitionTo(step2, step3);
 	});
 
-	// Étape 3 -> Étape 4
+	document.getElementById("btn-back-to-step2").addEventListener("click", () => {
+		purgeNodesFromStep(2);
+		transitionTo(step3, step2);
+	});
+
 	document.getElementById("btn-goto-step4").addEventListener("click", () => {
-		step3.style.display = "none";
-		step4.style.display = "block";
+		transitionTo(step3, step4);
 	});
 
-	// Étape Finale
+	document.getElementById("btn-back-to-step3").addEventListener("click", () => {
+		purgeNodesFromStep(3);
+		transitionTo(step4, step3);
+	});
+
 	document
 		.getElementById("btn-generate-final")
 		.addEventListener("click", () => {
 			renderGraph();
-			alert("Votre constellation personnalisée est prête à être téléchargée !");
+			alert(
+				"Magnifique ! Ta constellation familiale interconnectée est entièrement générée.",
+			);
 		});
 
 	// =========================================================================
-	// DYNAMISATION DES INPUTS ET CRÉATION DE NŒUDS
+	// 3. CAPTURE DE L'ÉCHAFAUDAGE INITIAL (Étape 1)
 	// =========================================================================
 	function updateNamesLayout() {
 		const count = parseInt(nbSiblingsSelect.value, 10);
@@ -105,31 +122,31 @@ document.addEventListener("DOMContentLoaded", () => {
 		const userFirstname =
 			document.getElementById("user-firstname").value.trim() || "Moi";
 
-		// Point central de l'utilisateur principal
-		createSmartNode(userFirstname, 25 + Math.random() * 10);
+		createSmartNode(userFirstname, 26 + Math.random() * 6, 1);
 
-		// Intégration de la fratrie
 		document.querySelectorAll(".sibling-name-input").forEach((input) => {
 			const name = input.value.trim();
 			if (name) {
-				createSmartNode(name, 18 + Math.random() * 10);
+				createSmartNode(name, 18 + Math.random() * 6, 1);
 			}
 		});
 	}
 
-	// Algorithme de répulsion géométrique anti-collision
-	function createSmartNode(labelText, chosenSize) {
+	// =========================================================================
+	// 4. ALGORITHME DE RÉPULSION GÉOMÉTRIQUE (Anti-collision)
+	// =========================================================================
+	function createSmartNode(labelText, chosenSize, stepId) {
 		const center = CANVAS_SIZE / 2;
 		const maxRadius = 250;
 		let x,
 			y,
 			attempts = 0,
 			minDistanceFound = 0;
-		const safetyMargin = 100; // Espace requis pour ne pas écraser les prénoms
+		const safetyMargin = 105;
 
 		do {
 			const angle = Math.random() * Math.PI * 2;
-			const radius = 50 + Math.random() * maxRadius;
+			const radius = 60 + Math.random() * maxRadius;
 			x = center + Math.cos(angle) * radius;
 			y = center + Math.sin(angle) * radius;
 
@@ -149,91 +166,101 @@ document.addEventListener("DOMContentLoaded", () => {
 			y: y,
 			size: chosenSize,
 			angle: finalAngle,
+			originStep: stepId,
 		});
 	}
 
+	// =========================================================================
+	// 5. SECTIONS DYNAMIQUES ET CHANNELS INPUT-LIVE
+	// =========================================================================
 	function buildDynamicInputs() {
 		siblingDatesContainer.innerHTML = "";
 		siblingMemoriesContainer.innerHTML = "";
 		siblingKeywordsContainer.innerHTML = "";
 
-		// On exclut le point 0 (Moi) pour ne garder que la fratrie
 		const siblings = graphNodes.slice(1);
 
 		siblings.forEach((sib) => {
-			// Injection Étape Âges
+			// Étape 2 : Bloc Date
 			const blockDate = document.createElement("div");
 			blockDate.className = "sibling-block";
 			blockDate.innerHTML = `
                 <div class="sibling-tag">${sib.label}</div>
-                <div class="date-row">
-                    <select class="select-pill sib-year-select">
-                        <option value="">Année</option>
-                        <option value="1998">1998</option>
-                        <option value="2002">2002</option>
-                        <option value="2005">2005</option>
-                        <option value="2010">2010</option>
-                    </select>
-                </div>
+                <div><input type="date" class="date-ux-input sib-date-input" /></div>
             `;
 			siblingDatesContainer.appendChild(blockDate);
+
 			blockDate
-				.querySelector(".sib-year-select")
+				.querySelector(".sib-date-input")
 				.addEventListener("change", (e) => {
-					if (e.target.value) handleLiveTextInput(`Né(e) en ${e.target.value}`);
+					if (e.target.value) {
+						const year = e.target.value.split("-")[0];
+						// CORRECTION CORTE : On affiche uniquement l'année (ex: "2002") pour éviter le débordement
+						handleLiveTextInput(year, 2);
+					}
 				});
 
-			// Injection Étape Souvenirs
+			// Étape 3 : Blocs Souvenirs
 			const blockMem = document.createElement("div");
 			blockMem.className = "sib-col";
 			blockMem.innerHTML = `
                 <div class="sib-header">${sib.label}</div>
                 <ul>
-                    <li><input type="text" class="live-input" placeholder="Un souvenir..."></li>
-                    <li><input type="text" class="live-input" placeholder="Un grand moment..."></li>
+                    <li><input type="text" class="live-input memory-in" placeholder="Un lieu cher..."></li>
+                    <li><input type="text" class="live-input memory-in" placeholder="Un souvenir marquant..."></li>
                 </ul>
             `;
 			siblingMemoriesContainer.appendChild(blockMem);
 
-			// Injection Étape Mots-clés
+			// Étape 4 : Blocs Mots-clés
 			const blockKey = document.createElement("div");
 			blockKey.className = "sib-col";
 			blockKey.innerHTML = `
                 <div class="sib-header">${sib.label}</div>
                 <ul>
-                    <li><input type="text" class="live-input" placeholder="Un adjectif..."></li>
-                    <li><input type="text" class="live-input" placeholder="Un sentiment..."></li>
+                    <li><input type="text" class="live-input keyword-in" placeholder="Ex: Complicité"></li>
+                    <li><input type="text" class="live-input keyword-in" placeholder="Ex: Rires"></li>
                 </ul>
             `;
 			siblingKeywordsContainer.appendChild(blockKey);
 		});
 
-		// Liaison des écouteurs de floutage pour mise à jour instantanée du canvas
-		document.querySelectorAll(".live-input").forEach((input) => {
+		document.querySelectorAll(".memory-in").forEach((input) => {
 			input.addEventListener("blur", (e) => {
 				const text = e.target.value.trim();
-				if (text) handleLiveTextInput(text);
+				if (text) handleLiveTextInput(text, 3);
+			});
+		});
+
+		document.querySelectorAll(".keyword-in").forEach((input) => {
+			input.addEventListener("blur", (e) => {
+				const text = e.target.value.trim();
+				if (text) handleLiveTextInput(text, 4);
 			});
 		});
 	}
 
-	function handleLiveTextInput(text) {
+	function handleLiveTextInput(text, stepId) {
 		if (graphNodes.some((n) => n.label === text)) return;
-		// Tailles hautement aléatoires (gros points asymétriques à la demande)
-		const dynamicSize = 4 + Math.random() * Math.random() * 38;
-		createSmartNode(text, dynamicSize);
+
+		const dynamicSize = 5 + Math.random() * Math.random() * 34;
+		createSmartNode(text, dynamicSize, stepId);
 		renderGraph();
 	}
 
 	function calculateSharedYears() {
-		const uYear =
-			parseInt(document.querySelector(".user-birth-year").value, 10) || 2000;
+		const inputUser = document.querySelector(".user-birth-date").value;
+		let userYear = 2000;
+		if (inputUser) {
+			userYear = parseInt(inputUser.split("-")[0], 10);
+		}
+		const currentYear = new Date().getFullYear();
 		document.getElementById("years-shared").textContent =
-			`${new Date().getFullYear() - uYear} ans`;
+			`${currentYear - userYear} ans`;
 	}
 
 	// =========================================================================
-	// RENDU DU GRAPH INTERCONNECTÉ CLAIR ET BIEN ALIGNÉ
+	// 6. MOTEUR DE RENDU (Masquage Anti-chevauchement)
 	// =========================================================================
 	function renderGraph() {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -241,19 +268,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		if (graphNodes.length < 1) return;
 
-		// Liaison maillée totale entre tous les points
+		// --- Lignes de maillage ---
 		for (let i = 0; i < graphNodes.length; i++) {
 			for (let j = i + 1; j < graphNodes.length; j++) {
 				const nodeA = graphNodes[i];
 				const nodeB = graphNodes[j];
 
 				const distance = Math.hypot(nodeB.x - nodeA.x, nodeB.y - nodeA.y);
+
 				let opacity = Math.max(0.12, 0.75 - distance / CANVAS_SIZE);
-				let lineWidth = Math.max(0.6, 4.0 - distance / 180);
+				let lineWidth = Math.max(0.6, 3.8 - distance / 180);
 
 				if (nodeA.size > 20 && nodeB.size > 20) {
-					lineWidth += 1.5;
-					opacity = Math.min(1, opacity + 0.2);
+					lineWidth += 1.2;
+					opacity = Math.min(1, opacity + 0.15);
 				}
 
 				ctx.beginPath();
@@ -265,7 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 		}
 
-		// Dessin des disques pleins blancs contrastés
+		// --- Disques blancs ---
 		graphNodes.forEach((node) => {
 			ctx.beginPath();
 			ctx.fillStyle = "#ffffff";
@@ -273,7 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			ctx.fill();
 		});
 
-		// Écriture des labels avec masque anti-chevauchement
+		// --- Textes avec masque noir ---
 		graphNodes.forEach((node) => {
 			ctx.save();
 			ctx.font = "italic 700 15px 'Nunito', sans-serif";
@@ -294,25 +322,24 @@ document.addEventListener("DOMContentLoaded", () => {
 				ctx.textAlign = "center";
 			}
 
-			// Masque d'effacement arrière-plan (Bordure invisible)
 			ctx.strokeStyle = "#000000";
 			ctx.lineWidth = 5;
 			ctx.strokeText(node.label, textX, textY);
 
-			// Rendu final blanc pur du texte
 			ctx.fillStyle = "#ffffff";
 			ctx.fillText(node.label, textX, textY);
+
 			ctx.restore();
 		});
 	}
 
 	// =========================================================================
-	// EXPORTATION & RÉINITIALISATION
+	// 7. MODULES DE TÉLÉCHARGEMENT ET RESET GLOBAL
 	// =========================================================================
 	document.getElementById("download-btn").addEventListener("click", () => {
 		const link = document.createElement("a");
 		link.href = canvas.toDataURL("image/png");
-		link.download = "ma-constellation-reparée.png";
+		link.download = "ma-constellation-fraternelle.png";
 		document.body.appendChild(link);
 		link.click();
 		document.body.removeChild(link);
