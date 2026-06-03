@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Visualizer de liens fraternels</title>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="stylesheet" href="./assets/css/style.css" />
+	</head>
+	<body>
+		<div class="app-container">
+			<div class="left-column">
+				<div id="canvas-container">
+					<canvas id="constellation"></canvas>
+				</div>
+				<div class="canvas-actions">
+					<button id="download-btn" class="btn-action">
+						Télécharger mon image 📥
+					</button>
+					<button id="reset-btn" class="btn-action reset">Recommencer ↺</button>
+				</div>
+			</div>
+
+			<div class="right-column">
+				<div class="page-wrapper">
+					<div class="hero step-section" id="step-welcome">
+						<div class="logo-badge">
+							<div class="logo-icon">
+								<svg viewBox="0 0 24 24">
+									<path
+										d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+									/>
+								</svg>
+							</div>
+							<span>SOS VILLAGES<br />D'ENFANTS</span>
+						</div>
+
+						<h1>
+							Bienvenue dans le <span class="script">visualizer</span><br />de
+							liens fraternels...
+						</h1>
+						<button class="btn-start" id="start-adventure-btn">
+							Commencer l'aventure →
+						</button>
+						<div class="hero-footer">
+							Cette expérience vous est proposée par<br />l'association
+							<a href="#">SOS Villages d'Enfants.</a>
+						</div>
+					</div>
+
+					<div class="section step-section" id="step-1" style="display: none">
+						<span class="section-label">Faisons connaissance !</span>
+						<div class="field-group">
+							<label class="field-label">Ton prénom :</label>
+							<input
+								type="text"
+								id="user-firstname"
+								class="field-input"
+								placeholder="Écris ici..."
+								required
+							/>
+						</div>
+						<div class="field-group">
+							<label class="field-label">Adresse mail :</label>
+							<input
+								type="email"
+								class="field-input"
+								placeholder="Écris ici..."
+							/>
+						</div>
+						<div class="field-group">
+							<div class="inline-row">
+								Tu as
+								<select class="select-pill" id="nb-siblings">
+									<option value="1">1</option>
+									<option value="2" selected>2</option>
+									<option value="3">3</option>
+									<option value="4">4</option>
+									<option value="5">5</option>
+								</select>
+								frètres / sœurs
+							</div>
+							<label class="field-label">Leurs noms :</label>
+							<div class="names-row" id="names-row"></div>
+						</div>
+						<div class="btn-suite-wrap">
+							<button class="btn-suite" id="btn-goto-step2">Suite →</button>
+						</div>
+					</div>
+
+					<div class="section step-section" id="step-2" style="display: none">
+						<span class="section-label purple">Parlons âge....</span>
+						<div class="field-group">
+							<label class="field-label">Ta date de naissance :</label>
+							<div class="date-row">
+								<select class="select-pill">
+									<option>Jour</option>
+								</select>
+								<select class="select-pill">
+									<option>Mois</option>
+								</select>
+								<select class="select-pill user-birth-year">
+									<option value="2005">2005</option>
+									<option value="2000" selected>2000</option>
+									<option value="1995">1995</option>
+									<option value="1990">1990</option>
+								</select>
+							</div>
+						</div>
+						<div class="field-group">
+							<label class="field-label">Et :</label>
+							<div class="sibling-dates" id="sibling-dates-container"></div>
+						</div>
+						<div class="wow-box">
+							<div class="big">WOW !</div>
+							<div>
+								Cela fait déjà
+								<span class="var-pill" id="years-shared">XX ans</span> que vous
+								partagez vos vies !
+							</div>
+						</div>
+						<div class="btn-suite-wrap">
+							<button class="btn-suite" id="btn-goto-step3">Suite →</button>
+						</div>
+					</div>
+
+					<div class="section step-section" id="step-3" style="display: none">
+						<span class="section-label orange"
+							>Il est temps de chercher dans tes souvenirs...</span
+						>
+						<div class="memory-label">
+							Quels sont les moments ou mots marquants passés avec tes
+							frères/sœurs ?
+						</div>
+						<div class="field-group">
+							<div class="siblings-grid" id="sibling-memories-container"></div>
+						</div>
+						<div class="btn-suite-wrap">
+							<button class="btn-suite" id="btn-goto-step4">Suite →</button>
+						</div>
+					</div>
+
+					<div class="section step-section" id="step-4" style="display: none">
+						<span class="section-label yellow">Et pour finir</span>
+						<div class="memory-label">
+							Quels mots définissent le mieux votre relation pour toi ?
+						</div>
+						<div class="field-group">
+							<div class="siblings-grid" id="sibling-keywords-container"></div>
+						</div>
+						<div class="btn-suite-wrap" style="padding-bottom: 48px">
+							<button class="btn-suite" id="btn-generate-final">
+								Générer ma constellation définitive →
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script src="./assets/js/script.js"></script>
+	</body>
+</html>
